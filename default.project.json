@@ -1,0 +1,33 @@
+{
+  "name": "Hyper-Framework",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "HyperShared": {
+        "$path": "src/shared"
+      },
+      "Tests": {
+        "$path": "tests/shared"
+      }
+    },
+
+    "ServerScriptService": {
+      "HyperServer": {
+        "$path": "src/server"
+      },
+      "Tests": {
+        "$path": "tests/server"
+      }
+    },
+
+    "ReplicatedFirst": {
+      "HyperClient": {
+        "$path": "src/client"
+      },
+      "Tests": {
+        "$path": "tests/client"
+      }
+    }
+  }
+}
