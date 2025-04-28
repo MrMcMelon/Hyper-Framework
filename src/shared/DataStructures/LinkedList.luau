@@ -27,6 +27,7 @@ export type List<T> = {
 	pop: (self: List<T>) -> T?,
 	unshift: (self: List<T>, val: T) -> Node<T>,
 	shift: (self: List<T>) -> T?,
+	clear: (self: List<T>) -> (),
 
 	new: () -> List<T>,
 	__index: List<T>,
@@ -186,6 +187,12 @@ function List:reverseValues()
 		node = current.prev
 		return current.val
 	end
+end
+
+function List:clear()
+	self.head = nil
+	self.tail = nil
+	self.size = 0
 end
 
 return table.freeze(List)

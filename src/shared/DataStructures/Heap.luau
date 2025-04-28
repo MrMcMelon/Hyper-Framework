@@ -197,4 +197,4 @@ function Heap.heapify(tbl, comparator)
 	return heap
 end
 
-return Heap
+return table.freeze(Heap)
