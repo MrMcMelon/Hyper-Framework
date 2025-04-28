@@ -31,6 +31,7 @@ export type List<T> = {
 	new: () -> List<T>,
 	__index: List<T>,
 	__tostring: (self: List<T>) -> string,
+	__len: (self: List<T>) -> number,
 }
 
 -- Removes a node from its list, destroys it and returns its value
@@ -69,12 +70,14 @@ List.__tostring = function(self)
 	local node = self.head
 	local vals = {}
 	while node do
-		table.insert(vals, node.val)
+		table.insert(vals, tostring(node.val))
 		node = node.next
 	end
 	return "Linked List: {"..table.concat(vals, ", ").."}"
 end
-
+List.__len = function(self)
+	return self.size
+end
 
 -- List constructor
 function List.new()
