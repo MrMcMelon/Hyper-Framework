@@ -1,9 +1,8 @@
 -- LinkedListBenchmark.lua
--- Run with Luau (e.g. `luau LinkedListBenchmark.lua`)
 
-local List = require(game.ReplicatedStorage.HyperShared.DataStructures.LinkedList)  -- adjust require path as needed
+local List = require(game.ReplicatedStorage.HyperShared.DataStructures.LinkedList)
 
--- Simple timer helper
+
 local function timeit(name, fn)
     local t0 = os.clock()
     fn()
@@ -11,7 +10,7 @@ local function timeit(name, fn)
     print(string.format("%-30s: %.16f s", name, t1 - t0))
 end
 
--- Benchmark sizes and repetitions
+
 local sizes   = {1e2, 1e3, 1e4}
 local repeats = 1
 

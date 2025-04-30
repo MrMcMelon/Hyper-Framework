@@ -11,7 +11,7 @@ local MIN_LOOP_TIME = 1/1000
 local MAX_FRAME_TIME = 1/1
 
 -- Main interface to interact with the scheduler
-export type Job<A...> = {
+export type Job<A... = ...any> = {
 	new: (f: (A...) -> ()) -> Job<A...>,
 	after: (self: Job<A...>, val: number?, A...) -> Job<A...>,
 	every: (self: Job<A...>, val: number?) -> Job<A...>,
@@ -29,7 +29,6 @@ export type Job<A...> = {
 	__index : Job<A...>,
 }
 
-local RunService = game:GetService("RunService")
 local Heap = require(script.Parent.DataStructures.Heap)
 local clock = os.clock
 local max = math.max
@@ -41,7 +40,7 @@ end
 
 local heap: Heap.Heap<Job<...any>> = Heap.new(compare)
 
-local Job: Job<...any> = {} :: Job<...any>
+local Job: Job = {}:: Job
 Job.__index = Job
 
 function Job.new(f)

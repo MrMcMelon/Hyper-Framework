@@ -4,13 +4,13 @@
 local Scheduler = require(script.Parent.Scheduler)
 local LinkedList = require(script.Parent.DataStructures.LinkedList)
 
-export type Callback<A...> = (A...) -> ()
+export type Callback<A... = ...any> = (A...) -> ()
 
 export type Connection = {
 	Disconnect: (self: Connection) -> (),
 }
 
-export type Signal<A...> = {
+export type Signal<A... = ...any> = {
 	__index: Signal<A...>,
 
 	_list: LinkedList.List<Scheduler.Job<A...>>,
@@ -30,7 +30,7 @@ export type Signal<A...> = {
 
 local schedule = Scheduler.new
 
-local Signal: Signal<...any> = {} :: Signal<...any>
+local Signal: Signal = {}:: Signal
 Signal.__index = Signal
 
 -- Signal Constructor
