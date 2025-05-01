@@ -1,107 +1,113 @@
+--!strict
 --!native
 --!optimize 2
 
-local Scheduler = require(script.Parent.Scheduler)
-local LinkedList = require(script.Parent.DataStructures.LinkedList)
+-- Signal.luau
+-- Signals for hyper framework
 
-export type Callback<A... = ...any> = (A...) -> ()
+local Task = require(script.Parent.Task)
 
-export type Connection = {
-	Disconnect: (self: Connection) -> (),
+export type Callback<A...> = (A...) -> (...any)
+
+export type Connection<A... = (...any)> = {
+	_prev: Connection<A...>,
+	_next: Connection<A...>,
+	_callback: Callback<A...>?,
+	_once: boolean,
+	_thread: thread?,
+	disconnect: (self: Connection<A...>) -> (),
 }
 
-export type Signal<A... = ...any> = {
-	__index: Signal<A...>,
-
-	_list: LinkedList.List<Scheduler.Job<A...>>,
-	_onceList: LinkedList.List<Scheduler.Job<A...>>,
-	_threads : { thread },
-
-	new: () -> Signal<A...>,
-
-	-- Pascal case to retain simliarity with Roblox Api
-	Connect: (self: Signal<A...>, f: Callback<A...>) -> Connection,
-	Once: (self: Signal<A...>, f: Callback<A...>) -> Connection,
-	Wait: (self: Signal<A...>) -> (),
-	Destroy: (self: Signal<A...>) -> (),
-	Fire: (self: Signal<A...>, A...) -> (),
-
+export type Signal<A... = (...any)> = {
+	_prev: Connection<A...>,
+	_next: Connection<A...>,
+	connect: (self: Signal<A...>, f: Callback<A...>) -> Connection<A...>,
+	once: (self: Signal<A...>, f: Callback<A...>) -> Connection<A...>,
+	wait: (self: Signal<A...>) -> (Connection<A...>, A...),
+	fire: (self: Signal<A...>, A...) -> (),
 }
 
-local schedule = Scheduler.new
+
+local Connection: Connection = {}:: Connection
+Connection["__index"] = Connection
+
+function Connection:disconnect()
+	local prev = self._prev
+	local next = self._next
+	next._prev = prev
+	prev._next = next
+end
 
 local Signal: Signal = {}:: Signal
-Signal.__index = Signal
+Signal["__index"] = Signal
 
--- Signal Constructor
-function Signal.new()
-	return setmetatable({
-		_list = LinkedList.new(),
-		_onceList = LinkedList.new(),
-		_threads = {},
-	}, Signal)
-end
-
--- adds the given callback to the signal and is run everytime fire is called
-function Signal:Connect(f)
-	local job = schedule(f)
-	local node = self._list:push(job)
-	return {
-		Disconnect = function()
-			warn("Disconnecting")
-			job:destroy()
-			node:destroy()
-		end
+function Signal:connect(f)
+	local prev = self._prev
+	local connection = (setmetatable({
+		_prev = prev,
+		_next = self,
+		_once = false,
+		_callback = f,
 	}
+	, Connection):: any):: Connection
+	prev._next = connection
+	self._prev = connection
+	return connection
 end
 
--- adds the given callback to the signal but its only run the first time fire is called
-function Signal:Once(f)
-	local job = schedule(f)
-	local node = self._onceList:push(job)
-	return {
-		Disconnect = function()
-			job:destroy()
-			node:destroy()
-		end
+function Signal:once(f)
+	local prev = self._prev
+	local connection = (setmetatable({
+		_prev = prev,
+		_next = self,
+		_callback = f,
+		_once = true
 	}
+	, Connection):: any):: Connection
+	prev._next = connection
+	self._prev = connection
+	return connection
 end
 
--- yields the current thread until
-function Signal:Wait()
-	local thread = coroutine.running()
-	table.insert(self._threads, thread)
-	coroutine.yield()
+function Signal:wait()
+	local prev = self._prev
+	local connection = (setmetatable({
+		_prev = prev,
+		_next = self,
+		_thread = coroutine.running(),
+		_once = true
+	}
+	, Connection):: any):: Connection
+	prev._next = connection
+	self._prev = connection
+	return connection, coroutine.yield()
 end
 
--- method to invoke all the callback and resume the threads in the given signal
-function Signal:Fire(...)
-	for job in self._list:values() do
-		job:after(0, ...)
+function Signal:fire(...)
+	local connection = self._next
+	while connection._once ~= nil do
+		local callback = connection._callback
+		if callback then
+			Task.defer(callback, ...)
+		end
+		local thread = connection._thread
+		if thread then
+			task.defer(thread, ...)
+		end
+		local prev = connection._prev
+		local next = connection._next
+		if connection._once then			
+			prev._next = next
+			next._prev = prev
+		end
+		connection = next
 	end
-	for job in self._onceList:values() do
-		job:after(0, ...)
-		job:destroy()
-	end
-	self._onceList:clear()
-	for _, thread in self._threads do
-		task.spawn(thread)
-	end
-	table.clear(self._threads)
 end
 
--- cleanup the signal and disconnects all the connections
-function Signal:Destroy()
-	for node, job in self._list:iter() do
-		job:destroy()
-		node:destroy()
-	end
-	for node, job in self._onceList:iter() do
-		job:destroy()
-		node:destroy()
-	end
-	table.clear(self._threads)
-	table.clear(self)
-end
 
-return table.freeze(Signal)
+return function<A...>(): Signal<A...>
+	local signal = {}
+	signal._prev = signal
+	signal._next = signal
+	return (setmetatable(signal, Signal):: any):: Signal<A...>
+end
