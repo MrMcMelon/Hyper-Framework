@@ -10,29 +10,31 @@ local SWEEPER_INTERVAL = 5
 
 local threads = {}
 
-local function call(f: (...any) -> (), ...: any)
+-- resume function runs the given function and adds the thread back to the pool
+local function resume(f: (...any) -> (), ...: any)
 	f(...)
 	table.insert(threads, coroutine.running())
 end
 
-local function thread()
+-- halts the current thread when its resumed it calls the resume function
+local function halt()
 	while true do 
-		call(coroutine.yield()) 
+		resume(coroutine.yield()) 
 	end
 end
 
 local Task = {}
 
 function Task.spawn<A...>(f: (A...) -> (), ...: A...)
-	return task.spawn(table.remove(threads) or task.spawn(thread), f, ...)
+	return task.spawn(table.remove(threads) or task.spawn(halt), f, ...)
 end
 
 function Task.defer<A...>(f: (A...) -> (), ...: A...)
-	return task.defer(table.remove(threads) or task.spawn(thread), f, ...)
+	return task.defer(table.remove(threads) or task.spawn(halt), f, ...)
 end
 
 function Task.delay<A...>(duration: number, f: (A...) -> (), ...: A...)
-	return task.delay(duration, table.remove(threads) or task.spawn(thread), f, ...)
+	return task.delay(duration, table.remove(threads) or task.spawn(halt), f, ...)
 end
 
 task.defer(function()

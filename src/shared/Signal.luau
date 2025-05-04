@@ -6,6 +6,7 @@
 -- Signals for hyper framework
 
 local Task = require(script.Parent.Task)
+local Garbot = require(script.Parent.Garbot)
 
 export type Callback<A...> = (A...) -> (...any)
 
@@ -25,6 +26,7 @@ export type Signal<A... = (...any)> = {
 	once: (self: Signal<A...>, f: Callback<A...>) -> Connection<A...>,
 	wait: (self: Signal<A...>) -> (Connection<A...>, A...),
 	fire: (self: Signal<A...>, A...) -> (),
+	destroy: (self: Signal<A...>) -> (),
 }
 
 
@@ -102,6 +104,18 @@ function Signal:fire(...)
 		end
 		connection = next
 	end
+end
+
+function Signal:destroy()
+	local connection = self._next
+	while connection._once ~= nil do
+		local thread = connection._thread
+		if thread then
+			coroutine.close(thread)
+		end
+		Garbot.collect(connection)
+	end
+	Garbot.collect(self)
 end
 
 
