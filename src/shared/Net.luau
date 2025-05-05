@@ -100,7 +100,6 @@ if env == "CLIENT" then
 			task.wait()
 
 			-- Packet encoding
-			debug.profilebegin("Packet Encoding")
 			if uniquePackets > 0 then
 				writeu8(uniquePackets)
 				for id, packetQueue in packetQueues do
@@ -126,11 +125,8 @@ if env == "CLIENT" then
 				local buf = writer.pop()
 				remote:FireServer(buf)
 				uniquePackets = 0
-				print(string.format("Payload Size: %.4f KB", buffer.len(buf) / 1000))
 			end
-			debug.profileend()
 
-			debug.profilebegin("Packet Decoding")
 			-- Packet decoding
 			if #decodeQueue > 0 then
 				for _, buf in decodeQueue do
@@ -152,7 +148,6 @@ if env == "CLIENT" then
 				end
 				table.clear(decodeQueue)
 			end
-			debug.profileend()
 
 		end
 	end)
