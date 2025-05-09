@@ -304,6 +304,10 @@ local function new()
         ), 20
     end
 
+    local function cursor()
+        return _cursor
+    end
+
     return {
         push                = push,
         u8                  = u8,
@@ -337,6 +341,7 @@ local function new()
         numberSequence     = numberSequence,
         colorSequence      = colorSequence,
         physicalProperties = physicalProperties,
+        cursor = cursor,
     }
 end
 

@@ -236,5 +236,5 @@ return function(defaultSize: number, scale: number)
 		struct = struct,
     }
 
-    return table.freeze(bufferSpace), fetch, writer, reader
+    return table.freeze(bufferSpace), fetch, writer, reader, registerType
 end
